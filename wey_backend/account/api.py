@@ -1,8 +1,11 @@
+from django.conf import settings
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.mail import send_mail
 from django.http import JsonResponse
 
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
+
+from notification.utils import create_notification
 
 from .forms import SignupForm, ProfileForm
 from .models import User, FriendshipRequest
@@ -38,7 +41,7 @@ def signup(request):
         user.is_active = False
         user.save()
 
-        url = f'http://127.0.0.1:8000/activateemail/?email={user.email}&id={user.id}'
+        url = f'{settings.WEBSITE_URL}/activateemail/?email={user.email}&id={user.id}'
 
         send_mail(
             "Please verify your email",
@@ -72,6 +75,13 @@ def friends(request, pk):
         'friends': UserSerializer(friends, many=True).data,
         'requests': requests
     }, safe=False)
+
+
+@api_view(['GET'])
+def my_friendship_suggestions(request):
+    serializer = UserSerializer(request.user.people_you_may_know.all(), many=True)
+
+    return JsonResponse(serializer.data, safe=False)
 
 
 @api_view(['POST'])
@@ -113,7 +123,9 @@ def send_friendship_request(request, pk):
     check2 = FriendshipRequest.objects.filter(created_for=user).filter(created_by=request.user)
 
     if not check1 or not check2:
-        FriendshipRequest.objects.create(created_for=user, created_by=request.user)
+        friendrequest = FriendshipRequest.objects.create(created_for=user, created_by=request.user)
+
+        notification = create_notification(request, 'new_friendrequest', friendrequest_id=friendrequest.id)
 
         return JsonResponse({'message': 'friendship request created'})
     else:
@@ -134,5 +146,7 @@ def handle_request(request, pk, status):
     request_user = request.user
     request_user.friends_count = request_user.friends_count + 1
     request_user.save()
+
+    notification = create_notification(request, 'accepted_friendrequest', friendrequest_id=friendship_request.id)
 
     return JsonResponse({'message': 'friendship request updated'})

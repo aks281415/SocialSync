@@ -38,6 +38,15 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
 ]
 
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'authorization',
+    'content-type',
+    'origin',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -58,6 +67,7 @@ INSTALLED_APPS = [
     'account',
     'chat',
     'chatbot',
+    'notification',
     'post',
     'search',
     'rest_framework',

@@ -4,7 +4,7 @@ from django.shortcuts import render
 from .models import User
 
 
-def activateemail(request):
+def activate_email(request):
     email = request.GET.get('email', '')
     id = request.GET.get('id', '')
 
